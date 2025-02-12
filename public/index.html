@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Daily Quest Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Daily Quest Tracker</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Quests</a></li>
+            <li><a href="#">Profile</a></li>
+        </ul>
+    </nav>
+    <main>
+        <section id="daily-quests">
+            <h2>Your Daily Quests</h2>
+            <ul>
+                <li>Drink Water - <span>10 XP</span></li>
+                <li>Walk 10,000 steps - <span>20 XP</span></li>
+                <li>Read 20 pages - <span>15 XP</span></li>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Daily Quest Tracker</p>
+    </footer>
+    <script>
+        // Daily Quests API
+        fetch('/api/daily-quests')
+            .then(response => response.json())
+            .then(data => console.log('Daily Quests:', data));
+    </script>
+</body>
+
+</html>
