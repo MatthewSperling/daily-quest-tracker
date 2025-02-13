@@ -1,14 +1,13 @@
-// Dummy data for posts
-const postsData = [
-    { id: 1, title: "Quest Completed: Drink Water", content: "I drank 8 glasses of water today and earned 10 XP!", date: "2025-02-11" },
-    { id: 2, title: "Quest Completed: Walk 10,000 Steps", content: "I reached my step goal and earned 20 XP!", date: "2025-02-11" },
-    { id: 3, title: "Quest Completed: Read 20 Pages", content: "I read 20 pages of my book and earned 15 XP!", date: "2025-02-11" }
-];
-
+document.addEventListener("DOMContentLoaded", () => {
+    fetch('/posts')
+        .then(response => response.json())
+        .then(posts => renderPosts(posts))
+        .catch(error => console.error('Error fetching posts:', error));
+});
+//Display Posts
 function renderPosts(posts) {
     const postsSection = document.getElementById("posts");
     postsSection.innerHTML = "";
-
     posts.forEach(post => {
         const postContainer = document.createElement("div");
         postContainer.classList.add("post");
@@ -30,7 +29,3 @@ function renderPosts(posts) {
         postsSection.appendChild(postContainer);
     });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    renderPosts(postsData);
-});
