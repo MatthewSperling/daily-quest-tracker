@@ -28,15 +28,12 @@
                 <li>Read 20 pages - <span>15 XP</span></li>
             </ul>
         </section>
+        <section id="posts"></section>
     </main>
     <footer>
         <p>&copy; 2025 Daily Quest Tracker</p>
     </footer>
-    <script>
-        // Daily Quests API
-        fetch('/api/daily-quests')
-            .then(response => response.json())
-            .then(data => console.log('Daily Quests:', data));
+    <script src="script.js">
     </script>
 </body>
 

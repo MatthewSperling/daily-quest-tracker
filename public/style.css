@@ -2,18 +2,14 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #ffffff;
-    /* White background */
     color: #333333;
-    /* Dark grey text */
     margin: 0;
     padding: 0;
 }
 
 header {
     background-color: #2c3e50;
-    /* Dark blue-grey */
     color: #ecf0f1;
-    /* Light grey text */
     padding: 20px;
     text-align: center;
 }
@@ -21,7 +17,6 @@ header {
 nav ul {
     list-style: none;
     background-color: #34495e;
-    /* Blue-grey */
     padding: 10px;
     margin: 0;
     display: flex;
@@ -49,4 +44,35 @@ footer {
     position: fixed;
     bottom: 0;
     width: 100%;
+}
+
+#posts {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 10px;
+}
+
+/* Post Structure */
+.post {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    padding: 15px;
+}
+
+.post h2 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.post .post-content {
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.post .post-footer {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #888;
 }

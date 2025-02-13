@@ -1,4 +1,3 @@
-// index.js
 const fs = require('fs');
 const https = require('https');
 const express = require('express');
@@ -7,7 +6,6 @@ const helmet = require('helmet');
 
 const app = express();
 
-// Secure HTTP headers with Helmet
 app.use(
     helmet({
         contentSecurityPolicy: {
@@ -24,16 +22,12 @@ app.use(
     })
 );
 
-// Serve static files
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 
-// Basic routing for main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// HTTPS 
-// HTTPS options
 const httpsOptions = {
     key: fs.readFileSync(path.join(__dirname, 'cert', 'key.pem')),
     cert: fs.readFileSync(path.join(__dirname, 'cert', 'cert.pem')),
