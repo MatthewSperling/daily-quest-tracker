@@ -15,18 +15,27 @@
     <nav>
         <ul>
             <li><a href="#">Home</a></li>
-            <li><a href="#">Quests</a></li>
             <li><a href="#">Profile</a></li>
         </ul>
     </nav>
     <main>
+        <p class="total-xp">Total XP: 0</p>
         <section id="daily-quests">
             <h2>Your Daily Quests</h2>
-            <ul>
-                <li>Drink Water - <span>10 XP</span></li>
-                <li>Walk 10,000 steps - <span>20 XP</span></li>
-                <li>Read 20 pages - <span>15 XP</span></li>
-            </ul>
+            <div id="tasks">
+                <div id="task-id-1">
+                    <h3>Drink Water 10 XP</h3>
+                    <button class="complete-task">Task Complete</button>
+                </div>
+                <div id="task-id-2">
+                    <h3>Walk 10,000 Steps 20 XP</h3>
+                    <button class="complete-task">Task Complete</button>
+                </div>
+                <div id="task-id-3">
+                    <h3>Read 20 Pages 10 XP</h3>
+                    <button class="complete-task">Task Complete</button>
+                </div>
+            </div>
         </section>
         <section id="posts"></section>
     </main>
