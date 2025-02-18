@@ -42,6 +42,8 @@ Additionally, the server was set up to listen on HTTPS to enfore secure connecti
 We used the helmet middleware to add security and prevent vulnerabilities: 
 
 const helmet = require('helmet');
+
+// Security middleware with Helmet
 app.use(
     helmet({
         contentSecurityPolicy: {
@@ -59,6 +61,49 @@ app.use(
 );
 
 **CACHING STRATEGIES** ------------------------------------------------------------------------
+
+Using Express middleware we implemented caching.
+
+/posts are cached using Cache-Control headers to reduce the amount of redundant requests: 
+
+//GET /posts 
+
+app.get('/posts', (req, res) => {
+    const posts = data;
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=30');
+    res.json(posts);
+});
+
+//GET /posts/:id 
+
+app.get('/posts/:id', (req, res) => {
+
+    const postId = parseInt(req.params.id, 10);
+    const post = data.find((p) => p.id === postId);
+    if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+    }
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(post);
+});
+
+**LESSONS LEARNED** ---------------------------------------------------------------------
+
+1. We learned how to implement SSL certificates and how to manually add it to the trusted list
+   for local development as the browser did not recognize the certificate initally.
+   
+2. We also learned how to find to handle cache duration. At times it was complicated to load
+   changes so we had to clear the browser cache and/or use incognito mode to view changes.
+
+3. During the process of learning what security headers were, we learned how to use helmet to prevent common web vulnerabilities such as XSS and clickjacking.
+
+**CONTRIBUTORS**
+
+Matthew Sperling
+Milan Djordjevic 
+
+This project is for SAIT Web Security. 
+
 
 
 
