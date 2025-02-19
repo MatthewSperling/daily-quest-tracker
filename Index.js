@@ -2,43 +2,68 @@ const fs = require('fs');
 const https = require('https');
 const express = require('express');
 const path = require('path');
+const helmet = require('helmet');
+const data = require('./public/Data/data');
 
 const app = express();
 
-// Middleware 
-app.use((req, res, next) => {
+app.use(express.json());
 
-    if (req.url.startsWith('/')) {
-        res.set('Cache-Control', 'public, max-age=3600'); // Cache static assets for 1 hour
-    }
-    next();
+// Security middleware with Helmet
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            useDefaults: true,
+            directives: {
+                "default-src": ["'self'"],
+                "script-src": ["'self'", "https:"],
+                "style-src": ["'self'", "https:"],
+                "img-src": ["'self'", "data:"],
+                "object-src": ["'none'"],
+            },
+        },
+        frameguard: { action: 'deny' },
+    })
+);
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
+
+// Path to the data file
+const postsFilePath = path.join(__dirname, 'public', 'data', 'posts.json');
+
+// routes 
+//GET /posts 
+
+app.get('/posts', (req, res) => {
+    const posts = data;
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=30');
+    res.json(posts);
 });
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public'), {
-    maxAge: '1h'
-}));
+//GET /posts/:id 
 
-// Main page
+app.get('/posts/:id', (req, res) => {
+
+    const postId = parseInt(req.params.id, 10);
+    const post = data.find((p) => p.id === postId);
+    if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+    }
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json(post);
+});
+
+
+// Main page route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// API with its own caching header for 5 min
-app.get('/api/daily-quests', (req, res) => {
-    const quests = [
-        { id: 1, quest: 'Drink Water', xp: 5 },
-        { id: 2, quest: 'Walk 10,000 steps', xp: 20 },
-        { id: 3, quest: 'Read 20 pages', xp: 15 }
-    ];
-    res.set('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
-    res.json(quests);
-});
-
-// HTTPS 
+// HTTPS self-signed certificates 
 const httpsOptions = {
     key: fs.readFileSync(path.join(__dirname, 'cert', 'key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, 'cert', 'cert.pem'))
+    cert: fs.readFileSync(path.join(__dirname, 'cert', 'cert.pem')),
 };
 
 const PORT = process.env.PORT || 3000;
