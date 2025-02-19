@@ -37,7 +37,7 @@ const postsFilePath = path.join(__dirname, 'public', 'data', 'posts.json');
 
 app.get('/posts', (req, res) => {
     const posts = data;
-    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=30');
+    res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=30');
     res.json(posts);
 });
 
@@ -50,7 +50,7 @@ app.get('/posts/:id', (req, res) => {
     if (!post) {
         return res.status(404).json({ error: 'Post not found' });
     }
-    res.set('Cache-Control', 'public, max-age=300');
+    res.set('Cache-Control', 'public, max-age=3600');
     res.json(post);
 });
 
