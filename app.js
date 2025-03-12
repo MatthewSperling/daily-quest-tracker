@@ -55,6 +55,19 @@ app.get('/quest', (req, res) => {
   }
 });
 
+// Protected Routes
+app.get("/profile", authenticateToken, (req, res) => {
+  res.json({ message: `Welcome, ${req.user.username}!`, role: req.user.role });
+});
+
+app.get("/admin", authenticateToken, authorizeRole("Admin"), (req, res) => {
+  res.json({ message: "Welcome Admin! Only admins can access this page." });
+});
+
+app.get("/dashboard", authenticateToken, (req, res) => {
+  res.json({ message: `Dashboard view for ${req.user.role}` });
+});
+
 // Root route: Redirect based on authentication status
 app.get('/', (req, res) => {
   if (req.isAuthenticated()) {
