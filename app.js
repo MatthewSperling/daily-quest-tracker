@@ -1,3 +1,4 @@
+// app.js
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -34,23 +35,32 @@ app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport'); // load passport configuration
 
-// Routes for local authentication
+// Local Authentication Routes
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
-// Routes for Google SSO
+// Google SSO Routes
 const googleAuthRoutes = require('./routes/googleAuth');
 app.use('/auth', googleAuthRoutes);
 
-// Serve static files (if needed, e.g., front-end assets in a "public" folder)
+// Serve static assets from the "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// A protected test route to verify authentication
-app.get('/dashboard', (req, res) => {
+// Protected route: Quest Page (accessible only when logged in)
+app.get('/quest', (req, res) => {
   if (req.isAuthenticated()) {
-    res.send(`Hello ${req.user.username}, welcome to your dashboard.`);
+    res.sendFile(path.join(__dirname, 'public', 'quest.html'));
   } else {
-    res.status(401).send('Unauthorized');
+    res.redirect('/index.html');
+  }
+});
+
+// Root route: Redirect based on authentication status
+app.get('/', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.redirect('/quest');
+  } else {
+    res.redirect('/index.html');
   }
 });
 
