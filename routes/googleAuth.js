@@ -10,8 +10,11 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 router.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
-    // Successful authentication: redirect to a protected route or dashboard
-    res.redirect('/dashboard');
+    req.session.user = { id: req.user.id, username: req.user.username, role: req.user.role };
+
+    return res.redirect("../quest.html");
 });
+
+
 
 module.exports = router;

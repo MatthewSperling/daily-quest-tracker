@@ -6,6 +6,7 @@ const session = require('express-session');
 const helmet = require('helmet');
 const passport = require('passport');
 const path = require('path');
+const { authenticateToken, authorizeRole } = require("./middleware");
 
 const app = express();
 
@@ -47,7 +48,7 @@ app.use('/auth', googleAuthRoutes);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Protected route: Quest Page (accessible only when logged in)
-app.get('/quest', (req, res) => {
+app.get('/quest.html', (req, res) => {
   if (req.isAuthenticated()) {
     res.sendFile(path.join(__dirname, 'public', 'quest.html'));
   } else {
@@ -64,14 +65,10 @@ app.get("/admin", authenticateToken, authorizeRole("Admin"), (req, res) => {
   res.json({ message: "Welcome Admin! Only admins can access this page." });
 });
 
-app.get("/dashboard", authenticateToken, (req, res) => {
-  res.json({ message: `Dashboard view for ${req.user.role}` });
-});
-
 // Root route: Redirect based on authentication status
 app.get('/', (req, res) => {
   if (req.isAuthenticated()) {
-    res.redirect('/quest');
+    res.redirect('/quest.html');
   } else {
     res.redirect('/index.html');
   }

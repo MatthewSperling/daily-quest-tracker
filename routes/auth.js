@@ -24,30 +24,34 @@ router.post('/register', async (req, res) => {
 });
 
 // Local Login
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
-    // Find the user by username
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
-    // Verify the provided password
-    const isValid = await argon2.verify(user.password, password);
-    if (!isValid) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-    // Log the user in using session-based authentication
-    req.login(user, (err) => {
-      if (err) {
-        return res.status(500).json({ message: "Login failed", error: err });
+      const { username, password } = req.body;
+      const user = await User.findOne({ username });
+
+      if (!user) {
+          return res.status(400).json({ message: "User not found" });
       }
-      return res.status(200).json({ message: "Login successful" });
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: error.message });
-  }
+
+      const isValid = await argon2.verify(user.password, password);
+      if (!isValid) {
+          return res.status(400).json({ message: "Invalid credentials" });
+      }
+
+      // Generate JWT token with role
+      const token = jwt.sign(
+        { id: user._id, username: user.username, role: user.role },
+        process.env.SESSION_SECRET,
+        { expiresIn: '1h' }
+    );
+
+      req.session.user = { id: user.id, username: user.username, role: user.role };
+      return res.json({ message: "Login successful", token });
+
+    } catch (error) {
+      console.error("Login error:", error);
+      return res.status(500).json({ error: error.message });
+    }
 });
 
 // Forgot Password (stub implementation)
