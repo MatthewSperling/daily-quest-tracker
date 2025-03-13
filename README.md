@@ -56,6 +56,15 @@ User roles determine access permissions for different parts of the application.
 2. Admin:
    Manage users, view all data, access admin dashboard, other admin features
 
+RBAC Implementation:
+   Roles are stored in the database and included in JWT payloads.
+   Middleware (authenticateToken, authorizeRole) enforces the access control.
+
+Protected Routes:
+    /profile → Accessible by authenticated users.
+    /quest → Different features based on role to the dashboard
+    /admin → Restricted to admins only.
+
 **Lessons Learned** ---------------------------------------------------------------------
 
 We faced persistent authentication issues, particularly a "ForbiddenError: invalid CSRF token", which prevented user registration and login. Despite multiple debugging attempts, we were unable to resolve it, which meant we couldn’t fully implement or test authentication and session management.
