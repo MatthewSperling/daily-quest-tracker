@@ -1,78 +1,98 @@
-// app.js
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const helmet = require('helmet');
-const passport = require('passport');
-const path = require('path');
-const { authenticateToken, authorizeRole } = require("./middleware");
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// Connect to MongoDB
-mongoose.connect(process.env.DB_CONNECTION || 'mongodb://127.0.0.1:27017/authentication', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
-
-// Middleware
-app.use(helmet());
+// middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// Session setup (adjust cookie settings for production)
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your_random_secret_key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false } // Set secure: true in production (requires HTTPS)
-}));
+// Environment variables and settings
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
+const ACCESS_TOKEN_EXPIRY = '15m';
+const REFRESH_TOKEN_EXPIRY = '7d';
 
-// Passport initialization
-app.use(passport.initialize());
-app.use(passport.session());
-require('./config/passport'); // load passport configuration
 
-// Local Authentication Routes
-const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
+let refreshTokens = [];
 
-// Google SSO Routes
-const googleAuthRoutes = require('./routes/googleAuth');
-app.use('/auth', googleAuthRoutes);
 
-// Serve static assets from the "public" folder
-app.use(express.static(path.join(__dirname, 'public')));
+const mockUser = {
+  id: '123',
+  username: 'testuser',
+  role: 'user'
+};
 
-// Protected route: Quest Page (accessible only when logged in)
-app.get('/quest.html', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.sendFile(path.join(__dirname, 'public', 'quest.html'));
-  } else {
-    res.redirect('/index.html');
-  }
+/*
+  LOGIN ROUTE
+*/
+app.post('/login', (req, res) => {
+
+  const user = mockUser;
+  const accessToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+  const refreshToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+
+
+  refreshTokens.push(refreshToken);
+
+
+  res.cookie('accessToken', accessToken, { httpOnly: true, secure: false });
+  res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: false });
+
+  res.json({ message: 'Logged in successfully' });
 });
 
-// Protected Routes
-app.get("/profile", authenticateToken, (req, res) => {
-  res.json({ message: `Welcome, ${req.user.username}!`, role: req.user.role });
+/*
+  MIDDLEWARE
+ 
+*/
+const authenticateToken = (req, res, next) => {
+  const token = req.cookies.accessToken;
+  if (!token) return res.sendStatus(401); // Unauthorized
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403); // Forbidden 
+    req.user = user;
+    next();
+  });
+};
+
+
+app.get('/protected', authenticateToken, (req, res) => {
+  res.json({ message: 'Protected content accessed successfully', user: req.user });
 });
 
-app.get("/admin", authenticateToken, authorizeRole("Admin"), (req, res) => {
-  res.json({ message: "Welcome Admin! Only admins can access this page." });
+/*
+  TOKEN REFRESH ENDPOINT
+  - Reads the refresh token from the HttpOnly cookie then verifies it and, if valid, generates a new access token.
+  
+*/
+app.post('/token', (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) return res.sendStatus(401);
+  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
+
+  jwt.verify(refreshToken, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    // Generate new access token
+    const newAccessToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+    res.cookie('accessToken', newAccessToken, { httpOnly: true, secure: false });
+    res.json({ message: 'Access token refreshed' });
+  });
 });
 
-// Root route: Redirect based on authentication status
-app.get('/', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.redirect('/quest.html');
-  } else {
-    res.redirect('/index.html');
-  }
+/*
+  LOGOUT ROUTE
+  - Clears the tokens 
+*/
+app.post('/logout', (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  refreshTokens = refreshTokens.filter(token => token !== refreshToken);
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  res.json({ message: 'Logged out successfully' });
 });
 
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
