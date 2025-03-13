@@ -1,30 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Register</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    form { max-width: 400px; margin: auto; }
-    input { width: 100%; padding: 8px; margin: 5px 0 15px; }
-    button { padding: 10px; width: 100%; }
-  </style>
+  <link rel="stylesheet" href="style.css"> <!-- Ensure this links to your CSS file -->
 </head>
+
 <body>
   <h1>Create Your Account</h1>
-  <form id="registerForm" action="/api/auth/register" method="POST">
+  <form id="registerForm">
+    <input type="hidden" name="_csrf" id="csrfToken">
+
     <label for="username">Username:</label>
     <input type="text" name="username" id="username" required>
-    
+
     <label for="email">Email:</label>
     <input type="email" name="email" id="email" required>
-    
+
     <label for="password">Password:</label>
     <input type="password" name="password" id="password" required>
-    
+
     <button type="submit">Register</button>
   </form>
-  <p>Already have an account? <a href="/login.html">Login here</a>.</p>
+
+  <p>Already have an account? <a href="/index.html">Login here</a>.</p>
+
+  <script>
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("csrfToken").value = getCookie("XSRF-TOKEN");
+    });
+  </script>
 </body>
+
 </html>

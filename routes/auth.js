@@ -1,74 +1,74 @@
 const express = require('express');
-const router = express.Router();
-const argon2 = require('argon2');
-const User = require('../models/User');
+const session = require('express-session');
+const passport = require('passport');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const MongoStore = require('connect-mongo');
+const authRoutes = require('./routes/auth');
+require('./config/passport'); // Ensure Passport is configured
 
-// Local Registration
-router.post('/register', async (req, res) => {
-  try {
-    const { username, email, password, role } = req.body;
-    // Check if user already exists
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ message: "Username already exists" });
-    }
-    // Hash password using Argon2
-    const hashedPassword = await argon2.hash(password);
-    const newUser = new User({ username, email, password: hashedPassword, role });
-    await newUser.save();
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ error: error.message });
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.DB_CONNECTION,
+    collectionName: 'sessions',
+  }),
+  cookie: {
+    httpOnly: true,
+    secure: false, // Set to true in production (requires HTTPS)
+    maxAge: 1000 * 60 * 15, // 15 minutes session expiry
   }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Database Connection
+mongoose.connect(process.env.DB_CONNECTION, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
+
+// Routes
+app.use('/api/auth', authRoutes);
+
+app.get('/', (req, res) => {
+  res.send('<h1>Welcome to the Authentication System</h1>');
 });
 
-// Local Login
-router.post("/login", async (req, res) => {
-  try {
-      const { username, password } = req.body;
-      const user = await User.findOne({ username });
-
-      if (!user) {
-          return res.status(400).json({ message: "User not found" });
-      }
-
-      const isValid = await argon2.verify(user.password, password);
-      if (!isValid) {
-          return res.status(400).json({ message: "Invalid credentials" });
-      }
-
-      // Generate JWT token with role
-      const token = jwt.sign(
-        { id: user._id, username: user.username, role: user.role },
-        process.env.SESSION_SECRET,
-        { expiresIn: '1h' }
-    );
-
-      req.session.user = { id: user.id, username: user.username, role: user.role };
-      return res.json({ message: "Login successful", token });
-
-    } catch (error) {
-      console.error("Login error:", error);
-      return res.status(500).json({ error: error.message });
+app.get('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({ message: 'Error logging out' });
     }
+    req.session.destroy(() => {
+      res.redirect('/');
+    });
+  });
 });
 
-// Forgot Password (stub implementation)
-router.post('/forgot-password', async (req, res) => {
-  // In a real application, generate a secure, time-limited token, store it,
-  // and email the user a password reset link.
-  const { email } = req.body;
-  // Stub: Respond as if the email was sent.
-  res.status(200).json({ message: "Password reset link has been sent to your email (stub)" });
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
 
-// Reset Password (stub implementation)
-router.post('/reset-password', async (req, res) => {
-  // In a real application, verify the reset token and update the password.
-  const { token, newPassword } = req.body;
-  // Stub: Respond as if the password was reset.
-  res.status(200).json({ message: "Password has been reset (stub)" });
-});
-
-module.exports = router;
+// Debugging Information
+console.log("\n--- Debugging ---");
+console.log("Trying to implement login and session authentication using Passport.js.");
+console.log("We encountered an issue where the login does not maintain session state, meaning users may not stay logged in after authentication.");
+console.log("Possible issues:");
+console.log("1. Missing Passport serialization and deserialization in ./config/passport.");
+console.log("2. Session store not persisting correctly.");
+console.log("3. Express-session might not be configured properly with MongoDB.");
+console.log("4. Login callback might not be redirecting or responding correctly.");
+console.log("5. req.user might not be persisting between requests.");
+console.log("Next Steps: Verify session setup and debug Passport configurations.");

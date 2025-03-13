@@ -20,21 +20,27 @@ passport.use(new GoogleStrategy({
   clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Set in .env
   callbackURL: "/auth/google/callback"
 },
-async (accessToken, refreshToken, profile, done) => {
-  try {
-    // Find existing user or create a new one
-    let user = await User.findOne({ googleId: profile.id });
-    if (!user) {
-      user = new User({
-        googleId: profile.id,
-        username: profile.displayName,
-        email: profile.emails && profile.emails[0].value,
-        role: 'user'
-      });
-      await user.save();
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      let user = await User.findOne({ googleId: profile.id });
+
+      if (!user) {
+        user = new User({
+          googleId: profile.id,
+          username: profile.displayName,
+          email: profile.emails && profile.emails.length > 0 ? profile.emails[0].value : '',
+          avatar: profile.photos && profile.photos.length > 0 ? profile.photos[0].value : '',
+          role: 'user',
+          createdAt: new Date()
+        });
+        await user.save();
+      } else {
+        user.lastLogin = new Date();
+        await user.save();
+      }
+
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
     }
-    return done(null, user);
-  } catch (error) {
-    return done(error, null);
-  }
-}));
+  }));
