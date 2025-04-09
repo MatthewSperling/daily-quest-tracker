@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - John Smith</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Dashboard</h1>
+  </header>
+  <nav>
+    <ul>
+      <li><a href="/quest">Home</a></li>
+      <li><a href="login.html">Logout</a></li>
+    </ul>
+  </nav>
+
+  <main class="dashboard-container">
+    <!-- User Info -->
+    <section id="user-info">
+      <h2>Welcome, John Smith!</h2>
+      <div class="info-box">
+        <p><strong>Name:</strong> John Smith</p>
+        <p><strong>Email:</strong> john.smith@example.com</p>
+      </div>
+    </section>
+
+    <!-- Profile Update Form -->
+    <section id="profile-update">
+      <h2>Update Your Profile</h2>
+      <form id="profileForm" action="/api/user/update" method="POST">
+        <div class="form-group">
+          <label for="update-name">Name</label>
+          <input type="text" id="update-name" name="name"
+                 pattern="^[A-Za-z ]{3,50}$" maxlength="50"
+                 placeholder="John Smith" required />
+        </div>
+
+        <div class="form-group">
+          <label for="update-email">Email</label>
+          <input type="email" id="update-email" name="email"
+                 pattern="[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$"
+                 placeholder="john.smith@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label for="update-bio">Bio</label>
+          <textarea id="update-bio" name="bio"
+                    placeholder="Write a short bio (500 characters max)"
+                    maxlength="500"
+                    pattern="^[A-Za-z0-9 .,!?'\n\r\\-]{1,500}$"
+                    required></textarea>
+        </div>
+
+        <button type="submit">Update Profile</button>
+      </form>
+    </section>
+
+    <!-- Logout -->
+    <section id="logout">
+      <button onclick="window.location.href='login.html';">Logout</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Daily Quest Tracker</p>
+  </footer>
+</body>
+</html>
