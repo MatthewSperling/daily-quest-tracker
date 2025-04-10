@@ -6,85 +6,147 @@ To configure and run the server for the Daily Quest Tracker:
 
 **Prerequisites**
 Make sure the following pre-requisites are installed in your end-device:
-- Node.js (Latest LTS version)
+- Node.js (LTS version)
 - Express
-- MongoDB
+- MongoDB (Community Server or Atlas)
+- OpenSSL (for local HTTPS)
+- Git
 
 **Download/Run Instructions**
 1. Clone Repository using the following command:
+   
    git clone https://github.com/MatthewSperling/daily-quest-tracker/
-   
-2. Install Dependencies using the following command in your work environment:
-   npm install express mongoose express-session helmet passport passport-google-oauth20 argon2 dotenv csurf express-rate-limit cookie-parser
-   
-3. Start MongoDB:
-   mongod
+   cd daily-quest-tracker
 
-5. Start the server:
+2. If you encounter `EACCES` permission errors on install:
+   - Avoid using `sudo`.
+   - Consider using Node Version Manager (nvm).
+   
+3. Install Dependencies using the following command in your work environment:
+   npm install
+   
+4. Configure your environment:
+   Create a `.env` file in the root directory and add the following:
+   
+   PORT=3000
+   DB_CONNECTION=mongodb://127.0.0.1:27017/authentication
+   SESSION_SECRET=your_random_secret_key
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   SSL_KEY_PATH=./cert/key.pem
+   SSL_CERT_PATH=./cert/cert.pem
+
+5. Generate SSL certificates for local development:
+   openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes
+
+6. Run the server:
    node app.js
 
-6. By doing the following you should recieve a message in the console that says the following:
+7. By doing the following you should recieve a message in the console that says the following:
    "Server is running on port 3000"
 
-7. Open on browser:
+8. Open on browser:
    http://localhost:3000
 
-**Authentication Mechanisms** ---------------------------------------------------------------------
+**INPUT VALIDATION** ---------------------------------------------------------------------
 
-Authentication in this project is implemented using both local authentication (username & password) and Single Sign-On (SSO) with Google OAuth.
+All user inputs are validated both client-side and server-side to prevent injection and malformed data.
 
-1. Local Authentication:
-   Users register with a hashed password (Argon2) stored in MongoDB.
-   During login, the server verifies the password and issues a session (session-based auth) or JWT (token-based auth).
+- **Techniques Used**:
+  - HTML5 form validation (`required`, `type=email`)
+  - Mongoose schema validation (e.g., `required`, `unique`, `enum`)
+  - Middleware sanitization
 
-2. SSO Authentication (Google OAuth):
-   Users are redirected to Google for authentication.
-   Google sends back an OAuth token, which is validated by the server.
-   If the user is new, an account is created; otherwise, they are logged in.
+- **Validation Rules**:
+  - `username`: required, string, unique
+  - `email`: required, email format
+  - `password`: required, minimum 8 characters
 
-   3. Session Management:
-      Session-based auth: Express-session stores the session in memory (destroyed upon logout).
-      JWT-based auth: Tokens are stored in local storage and validated on each request.
-      Logout: Clears session or removes JWT from local storage.
+- **Edge Case Handling**:
+  - Empty strings and nulls rejected
+  - Duplicate entries rejected
+  - Unexpected field types casted or rejected
 
-**Role Based Access Control** ------------------------------------------------------------------------
+- **Attack Mitigation**:
+  - Prevents XSS by rejecting embedded script input
+  - Blocks NoSQL injection with strict schema validation
+    
+**OUTPUT ENCODING** ------------------------------------------------------------------------
 
-User roles determine access permissions for different parts of the application.
+- **Libraries Used**:
+  - `escape-html`: encodes user content before rendering
+  - Helmet CSP settings: block unsafe inline scripts
 
-1. User:
-   Access profile, complete daily quests, view dashboard
-2. Admin:
-   Manage users, view all data, access admin dashboard, other admin features
+- **Methods**:
+  - Server-side content is escaped before insertion into views
+  - Client-side DOM insertion uses `textContent` rather than `innerHTML`
 
-RBAC Implementation:
-   Roles are stored in the database and included in JWT payloads.
-   Middleware (authenticateToken, authorizeRole) enforces the access control.
+- **Example**:
+  ```js
+  const escape = require('escape-html');
+  res.send(`<p>${escape(userInput)}</p>`);
+  ```
 
-Protected Routes:
-    /profile → Accessible by authenticated users.
-    /quest → Different features based on role to the dashboard
-    /admin → Restricted to admins only.
+**ENCRYPTION METHODS** ---------------------------------------------------------------------
 
-**Lessons Learned** ---------------------------------------------------------------------
+- **Password Hashing**:
+  - `argon2` for password hashing with salt
+  - Protects against brute-force and rainbow table attacks
 
-We faced persistent authentication issues, particularly a "ForbiddenError: invalid CSRF token", which prevented user registration and login. Despite multiple debugging attempts, we were unable to resolve it, which meant we couldn’t fully implement or test authentication and session management.
+- **Data in Transit**:
+  - HTTPS is enforced in development using self-signed certs
+  - Helmet middleware enforces HTTPS headers
 
-This experience highlighted the importance of testing security features in isolation before integrating them. The combination of CSRF protection, session-based authentication, and JWT handling introduced conflicts that were difficult to troubleshoot under time constraints.
+- **Session & JWT Security**:
+  - Sessions stored with `express-session` and signed with secure secret
+  - JWTs signed using environment secret
 
-We also planned to conduct penetration testing for vulnerabilities like session hijacking and token tampering, but authentication issues prevented further progress. Moving forward, we would prioritize getting core functionality working first before adding security layers.
+- **Sensitive Data at Rest**:
+  - Environment variables managed via `.env` file and `dotenv`
+  - MongoDB stores hashed passwords, no plaintext stored
 
-Ultimately, the project did not run as expected, but we gained insight into the challenges of implementing authentication and security in a structured system.
+**DEPENDENCY MANAGEMENT** ------------------------------------------------------------------------
 
-**CONTRIBUTORS** ------------------------------------------------------------------------
+- **Installation**:
+  - `npm install` installs dependencies from `package.json`
+
+- **Tracking**:
+  - All versions locked via `package-lock.json`
+
+- **Security**:
+  - Helmet, CSRF protection, and other dependencies secured
+  - Regular `npm audit` and `npm outdated` checks recommended
+
+- **Version Control**:
+  - Do not commit `node_modules`
+  - `.env` and cert files are excluded via `.gitignore`
+
+**LESSONS LEARNED** --------------------------------------------------------------------
+
+1. **Certificate Trust Challenges**:
+   - Local HTTPS required manual certificate trust setup. We had to add generated certs to the trusted list to avoid browser warnings.
+
+2. **Form Validation Pitfalls**:
+   - Browser-level validation was bypassed with tools like Postman. Server-side schema validation prevented malicious bypasses.
+
+3. **Security Headers and CSP**:
+   - Using Helmet taught us about attack vectors like XSS and clickjacking, and how to mitigate them with CSP and Frameguard.
+
+4. **OAuth Role Logic**:
+   - Balancing traditional login and Google SSO was complex. Managing roles via JWT claims and MongoDB simplified this dual-login system.
+
+5. **Caching Hurdles**:
+   - Static file updates didn’t reflect due to browser caching. We had to configure cache headers and use Incognito for testing changes.
+  
+6. **Security Testing**:
+   - We manually tested for XSS and SQL/NoSQL injection with inputs like:
+      - <script>alert('XSS')</script>
+      - ' OR '1'='1
+   - Inputs were correctly rejected or escaped by the validation and encoding layers.
+  
+**CONTRIBUTORS** -------------------------------------------------------------------------------------------------------
 
 Matthew Sperling
 Milan Djordjevic 
 
 This project is for SAIT Web Security. 
-
-
-
-
-
-
-   
