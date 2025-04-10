@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - <%= user.name %></title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Dashboard</h1>
+  </header>
+  <nav>
+    <ul>
+      <li><a href="/quest">Home</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </nav>
+  <main class="dashboard-container">
+    <section id="user-info">
+      <h2>Welcome, <%= user.name %>!</h2>
+      <div class="info-box">
+        <p><strong>Name:</strong> <%= user.name %></p>
+        <p><strong>Email:</strong> <%= user.email %></p>
+      </div>
+    </section>
+
+    <section id="profile-update">
+      <h2>Update Your Profile</h2>
+      <form id="profileForm">
+        <div class="form-group">
+          <label for="update-name">Name</label>
+          <input type="text" id="update-name" name="name" value="<%= user.username %>" required />
+        </div>
+        <div class="form-group">
+          <label for="update-email">Email</label>
+          <input type="email" id="update-email" name="email" value="<%= user.email %>" required />
+        </div>
+        <div class="form-group">
+          <label for="update-bio">Bio</label>
+          <textarea id="update-bio" name="bio" maxlength="500" required><%= user.bio %></textarea>
+        </div>
+        <button type="submit">Update Profile</button>
+      </form>
+    </section>
+    <section id="logout">
+      <button onclick="window.location.href='/logout'">Logout</button>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 Daily Quest Tracker</p>
+  </footer>
+  <script>
+    document.getElementById('profileForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+  
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Missing token. Please log in again.');
+        window.location.href = '/index.html';
+        return;
+      }
+  
+      const name = document.getElementById('update-name').value;
+      const email = document.getElementById('update-email').value;
+      const bio = document.getElementById('update-bio').value;
+  
+      const res = await fetch('/dashboard/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, email, bio })
+      });
+  
+      if (res.ok) {
+        alert('Profile updated successfully');
+        window.location.reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || 'Update failed');
+      }
+    });
+  </script>
+  
+</body>
+</html>

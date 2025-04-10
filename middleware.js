@@ -2,20 +2,21 @@ const jwt = require('jsonwebtoken');
 
 // Middleware to authenticate JWT
 function authenticateToken(req, res, next) {
-    const token = req.headers.authorization?.split(" ")[1];
-
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+  
     if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: 'Unauthorized' });
     }
-
+  
     jwt.verify(token, process.env.SESSION_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ message: "Forbidden" });
-        }
-        req.user = user;
-        next();
+      if (err) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      req.user = user;
+      next();
     });
-}
+  }
 
 // Middleware to authorize based on role
 function authorizeRole(role) {

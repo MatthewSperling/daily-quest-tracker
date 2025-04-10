@@ -1,7 +1,8 @@
 node_modules/
-
-
 cert/key.pem
 cert/cert.pem
 
 
+key.pem
+cert.pem
+.env

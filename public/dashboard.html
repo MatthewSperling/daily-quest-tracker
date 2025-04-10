@@ -30,7 +30,7 @@
     <!-- Profile Update Form -->
     <section id="profile-update">
       <h2>Update Your Profile</h2>
-      <form id="profileForm" action="/api/user/update" method="POST">
+      <form id="profileForm" action="/dashboard/update" method="POST">
         <div class="form-group">
           <label for="update-name">Name</label>
           <input type="text" id="update-name" name="name"
@@ -67,5 +67,29 @@
   <footer>
     <p>&copy; 2025 Daily Quest Tracker</p>
   </footer>
+
+  <script>
+    const token = localStorage.getItem('token');
+  
+    fetch('/dashboard', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Unauthorized');
+      return res.text();
+    })
+    .then(html => {
+      // Replace entire document body with the server-rendered HTML
+      document.open();
+      document.write(html);
+      document.close();
+    })
+    .catch(err => {
+      document.body.innerHTML = `<h1>Access Denied</h1><p>${err.message}</p>`;
+    });
+  </script>  
 </body>
 </html>
